@@ -1,4 +1,4 @@
-import { axisClasses, legendClasses, chartsGridClasses } from '@mui/x-charts';
+import { axisClasses, chartsGridClasses, legendClasses } from '@mui/x-charts';
 
 import { gray } from '../themePrimitives.js';
 

@@ -1,19 +1,20 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
-import AppNavbar from './AppNavbar.js';
-import SideMenu from './SideMenu.js';
-import Overview from './Overview.js';
-import CategoriesManagement from './CategoriesManagement';
-import QuestionsManagement from './QuestionsManagement';
-import AppTheme from '../shared-theme/AppTheme';
+
 import {
   chartsCustomizations,
   dataGridCustomizations,
-  // datePickersCustomizations,
   treeViewCustomizations,
-} from '../theme/customizations';
+} from '../theme/customizations/index.js';
+
+import AppNavbar from './AppNavbar.jsx';
+import AppTheme from '../shared-theme/AppTheme.js';
+import Box from '@mui/material/Box';
+import CategoriesManagement from './CategoriesManagement.jsx';
+import CssBaseline from '@mui/material/CssBaseline';
+import Overview from './Overview.jsx';
+import QuestionsManagement from './QuestionsManagement.jsx';
+import SideMenu from './SideMenu.jsx';
+import { styled } from '@mui/material/styles';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -57,13 +58,20 @@ export default function Dashboard() {
     <AppTheme themeComponents={xThemeComponents}>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
-        <AppNavbar open={open} handleDrawerOpen={handleDrawerToggle} />
+        <AppNavbar
+          // @ts-ignore
+          open={open}
+          handleDrawerOpen={handleDrawerToggle}
+        />
         <SideMenu
           open={open}
           handleDrawerToggle={handleDrawerToggle}
           setCurrentView={setCurrentView}
         />
-        <Main open={open}>
+        <Main
+          // @ts-ignore
+          open={open}
+        >
           {currentView === 'overview' && <Overview />}
           {currentView === 'categories' && <CategoriesManagement />}
           {currentView === 'questions' && <QuestionsManagement />}

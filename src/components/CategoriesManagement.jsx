@@ -1,42 +1,34 @@
 import * as React from 'react';
+
 import {
   Box,
-  Button as MuiButton,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
   DialogContentText,
-  CircularProgress,
+  DialogTitle,
   InputLabel,
+  Button as MuiButton,
+  TextField,
+  Typography,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { styled } from '@mui/material/styles';
-import { CATEGORIES_API } from '../api/routes/index.js';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import UploadIcon from '@mui/icons-material/Upload';
-import { InputText } from 'primereact/inputtext';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import { useState } from 'react';
-import Grid from '@mui/material/Grid';
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  fontWeight: 'bold',
-  // backgroundColor: theme.palette.primary.main,
-  // color: theme.palette.common.white,
-}));
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import { Button } from 'primereact/button';
+import { CATEGORIES_API } from '../api/routes/index.js';
+import { Column } from 'primereact/column';
+import { DataTable } from 'primereact/datatable';
+import Grid from '@mui/material/Grid';
+import { InputText } from 'primereact/inputtext';
+import UploadIcon from '@mui/icons-material/Upload';
+import { useState } from 'react';
+
+// const StyledTableCell = styled(TableCell)(({ theme }) => ({
+//   fontWeight: 'bold',
+//   // backgroundColor: theme.palette.primary.main,
+//   // color: theme.palette.common.white,
+// }));
 
 export default function CategoriesManagement() {
   const [categories, setCategories] = React.useState([]);
@@ -51,6 +43,9 @@ export default function CategoriesManagement() {
   const [aiPhotos, setAiPhotos] = useState([]);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [selectedAiPhoto, setSelectedAiPhoto] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   React.useEffect(() => {
     // fetchCategories();
@@ -59,12 +54,15 @@ export default function CategoriesManagement() {
     }, 1000);
   }, []);
 
-  // Add this new function to fetch photos from Pexels
+  // Function to fetch photos from Pexels
   const fetchPexelsPhotos = async (query) => {
     setIsLoadingPhotos(true);
     try {
+      const randomPage = Math.floor(Math.random() * 10) + 1;
+      const randomSeed = Math.random().toString(36).substring(7);
+
       const response = await fetch(
-        `https://api.pexels.com/v1/search?query=${query}&per_page=3&orientation=square`,
+        `https://api.pexels.com/v1/search?query=${query}-germany&per_page=3&orientation=square&page=${randomPage}&seed=${randomSeed}`,
         {
           headers: {
             Authorization: 'SAmj8B87y4eVFupR0AmJ8vagQHvBfILEzv7tVzvPjHSYo3CsucOe43Ch',
@@ -80,9 +78,9 @@ export default function CategoriesManagement() {
     }
   };
 
-  // Add this function to handle AI button click
+  // Function to handle AI button click
   const handleAiClick = () => {
-    const categoryName = document.querySelector('input[name="name"]').value;
+    const categoryName = editingCategory?.name;
     if (categoryName) {
       fetchPexelsPhotos(categoryName);
     } else {
@@ -114,30 +112,35 @@ export default function CategoriesManagement() {
   const handleClose = () => {
     setOpen(false);
     setEditingCategory(null);
+    setImageFile(null);
+    setSelectedAiPhoto(null);
+    setAiPhotos([]);
   };
 
   const handleSave = async (event) => {
     event.preventDefault();
+    setIsSaving(true);
+    setSaveError(null);
     const formData = new FormData(event.currentTarget);
 
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-    // const categoryData = {
-    //   name: formData.get('name'),
-    //   description: formData.get('description'),
-    // };
-
     try {
+      // If there's a selected Pexels photo, fetch it and convert to File
+      if (selectedAiPhoto) {
+        const response = await fetch(selectedAiPhoto);
+        const blob = await response.blob();
+        const file = new File([blob], 'pexels-image.jpg', { type: 'image/jpeg' });
+        formData.append('image', file);
+      } else if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
       let response;
       if (editingCategory) {
-        // Update existing category
         response = await fetch(CATEGORIES_API.UPDATE(editingCategory._id), {
           method: 'PATCH',
           body: formData,
         });
       } else {
-        // Create new category
         response = await fetch(CATEGORIES_API.CREATE, {
           method: 'POST',
           body: formData,
@@ -149,15 +152,19 @@ export default function CategoriesManagement() {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log(editingCategory ? 'Updated category:' : 'Created category:', data);
-      handleClose();
-      fetchCategories();
+      setTimeout(() => {
+        handleClose();
+        fetchCategories();
+      }, 1000);
+      setSaveSuccess(true);
     } catch (error) {
       console.error(
         editingCategory ? 'Error updating category:' : 'Error creating category:',
         error
       );
+      setSaveError(error.message || 'An error occurred while saving');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -319,28 +326,6 @@ export default function CategoriesManagement() {
 
   return (
     <Box>
-      {/* <Box sx={{ display: 'flex', justifyContent: 'space-between' }}> */}
-      {/* <MuiButton variant='contained' onClick={() => handleOpen()} sx={{ mb: 2 }}>
-          Add New Category
-        </MuiButton> */}
-      {/*  search componet input label with backgorund color gray */}
-      {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <TextField
-            label='Search'
-            variant='outlined'
-            InputProps={{
-              sx: { backgroundColor: '#f0f0f0', padding: '0 5px', minWidth: '300px' },
-            }}
-            InputLabelProps={{
-              sx: { backgroundColor: '#f0f0f0', padding: '-5px 5px', lineHeight: '1.1' },
-            }}
-            onChange={(e) => {
-              console.log(e.target.value);
-            }}
-          />
-        </Box> */}
-      {/* </Box> */}
-
       {isLoading && !hasRequestFailed && (
         <Box
           sx={{
@@ -372,7 +357,39 @@ export default function CategoriesManagement() {
           <Column header='Actions' body={actionsBodyTemplate}></Column>
         </DataTable>
       )}
-      <Dialog open={open} onClose={handleClose} maxWidth='xs' fullWidth>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth='xs'
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            position: 'relative',
+          },
+        }}
+      >
+        {isSaving && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}
+          >
+            <CircularProgress sx={{ color: 'white' }} />
+            <Typography sx={{ color: 'white', mt: 2 }}>
+              {saveSuccess ? 'Save successful!' : 'Saving...'}
+            </Typography>
+          </Box>
+        )}
         <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
         <DialogContentText sx={{ ml: 3, mt: -1, mb: 2 }}>
           {editingCategory ? 'Edit the category details below' : 'Enter the category details below'}
@@ -436,6 +453,7 @@ export default function CategoriesManagement() {
                   },
                 }}
                 startIcon={<AutoFixHighIcon />}
+                onClick={handleAiClick}
               >
                 Use AI
               </MuiButton>
@@ -488,9 +506,20 @@ export default function CategoriesManagement() {
               </Box>
             )}
           </DialogContent>
+          {saveError && (
+            <Box sx={{ p: 2, bgcolor: '#ffebee' }}>
+              <Typography color='error' variant='body2'>
+                Error: {saveError}
+              </Typography>
+            </Box>
+          )}
           <DialogActions>
-            <MuiButton onClick={handleClose}>Cancel</MuiButton>
-            <MuiButton type='submit'>Save</MuiButton>
+            <MuiButton onClick={handleClose} disabled={isSaving}>
+              Cancel
+            </MuiButton>
+            <MuiButton type='submit' disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </MuiButton>
           </DialogActions>
         </form>
       </Dialog>

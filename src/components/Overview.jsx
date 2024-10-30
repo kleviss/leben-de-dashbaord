@@ -1,8 +1,10 @@
 import * as React from 'react';
+
 import { Grid, Typography } from '@mui/material';
-import StatCard from './StatCard';
+
 import PageViewsBarChart from '../dashboard/components/PageViewsBarChart.js';
 import SessionsChart from '../dashboard/components/SessionsChart.js';
+import StatCard from './StatCard.jsx';
 
 const data = [
   {

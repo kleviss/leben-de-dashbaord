@@ -1,6 +1,6 @@
-import { alpha } from '@mui/material/styles';
+import { brand, gray } from '../themePrimitives.js';
 
-import { gray, brand } from '../themePrimitives';
+import { alpha } from '@mui/material/styles';
 
 /* eslint-disable */
 /* eslint-disable import/prefer-default-export */
