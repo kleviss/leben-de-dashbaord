@@ -9,17 +9,14 @@ import {
 import AppNavbar from './AppNavbar.jsx';
 import AppTheme from '../shared-theme/AppTheme.js';
 import Box from '@mui/material/Box';
-import CategoriesManagement from './CategoriesManagement.jsx';
 import CssBaseline from '@mui/material/CssBaseline';
-import Overview from './Overview.jsx';
-import QuestionsManagement from './QuestionsManagement.jsx';
+import { Outlet } from 'react-router-dom';
 import SideMenu from './SideMenu.jsx';
 import { styled } from '@mui/material/styles';
 
 const xThemeComponents = {
   ...chartsCustomizations,
   ...dataGridCustomizations,
-  // ...datePickersCustomizations,
   ...treeViewCustomizations,
 };
 
@@ -48,7 +45,6 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 
 export default function Dashboard() {
   const [open, setOpen] = React.useState(true);
-  const [currentView, setCurrentView] = React.useState('overview');
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -58,23 +54,10 @@ export default function Dashboard() {
     <AppTheme themeComponents={xThemeComponents}>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
-        <AppNavbar
-          // @ts-ignore
-          open={open}
-          handleDrawerOpen={handleDrawerToggle}
-        />
-        <SideMenu
-          open={open}
-          handleDrawerToggle={handleDrawerToggle}
-          setCurrentView={setCurrentView}
-        />
-        <Main
-          // @ts-ignore
-          open={open}
-        >
-          {currentView === 'overview' && <Overview />}
-          {currentView === 'categories' && <CategoriesManagement />}
-          {currentView === 'questions' && <QuestionsManagement />}
+        <AppNavbar open={open} handleDrawerOpen={handleDrawerToggle} />
+        <SideMenu open={open} handleDrawerToggle={handleDrawerToggle} />
+        <Main open={open}>
+          <Outlet />
         </Main>
       </Box>
     </AppTheme>

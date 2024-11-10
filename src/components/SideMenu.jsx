@@ -1,22 +1,28 @@
 import * as React from 'react';
+
 import { styled, useTheme } from '@mui/material/styles';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
+
+import Box from '@mui/material/Box';
+import CategoryIcon from '@mui/icons-material/Category';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Divider from '@mui/material/Divider';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import { Link } from 'react-router-dom';
+import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import CategoryIcon from '@mui/icons-material/Category';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import image from '../assets/lebede.png';
 import smallImage from '../assets/lebede-small.png';
-import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
-import Typography from '@mui/material/Typography';
+
 const drawerWidth = 240;
 const collapsedDrawerWidth = 65;
 
@@ -67,8 +73,31 @@ export default function SideMenu({ open, handleDrawerToggle, setCurrentView }) {
   const theme = useTheme();
   const logo = open ? image : smallImage;
 
+  const menuItems = [
+    {
+      text: 'Overview',
+      icon: <DashboardIcon />,
+      path: '/overview',
+    },
+    {
+      text: 'Categories',
+      icon: <CategoryIcon />,
+      path: '/categories',
+    },
+    {
+      text: 'Questions',
+      icon: <QuestionAnswerIcon />,
+      path: '/questions',
+    },
+  ];
+
   return (
     <StyledDrawer variant='permanent' open={open}>
+      {!open && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, ml: 1 }}>
+          <img src={logo} alt='logo' width={30} height={20} />
+        </Box>
+      )}
       <DrawerHeader>
         <div
           style={{
@@ -78,8 +107,9 @@ export default function SideMenu({ open, handleDrawerToggle, setCurrentView }) {
             justifyContent: open ? 'flex-start' : 'center',
           }}
         >
-          <img src={logo} alt='logo' width={open ? 110 : 30} height={open ? 25 : 30} />
+          <img src={logo} alt='logo' width={open ? 110 : 30} height={open ? 25 : 20} />
         </div>
+
         <IconButton
           onClick={handleDrawerToggle}
           size={open ? 'medium' : 'small'}
@@ -90,51 +120,40 @@ export default function SideMenu({ open, handleDrawerToggle, setCurrentView }) {
       </DrawerHeader>
       <Divider />
       <List>
-        {[
-          { text: 'Overview', icon: <DashboardIcon />, view: 'overview' },
-          { text: 'Categories', icon: <CategoryIcon />, view: 'categories' },
-          { text: 'Questions', icon: <QuestionAnswerIcon />, view: 'questions' },
-        ].map((item) => (
-          <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? 'initial' : 'center',
-                px: 2.5,
-              }}
-              onClick={() => setCurrentView(item.view)}
+        {menuItems.map((item) => (
+          <Tooltip title={!open ? item.text : ''} placement='right' key={item.text}>
+            <ListItem
+              disablePadding
+              sx={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  ml: !open ? 1 : 'auto',
-                  justifyContent: 'center',
-                }}
+              <Link
+                to={item.path}
+                style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
-            </ListItemButton>
-          </ListItem>
+                <ListItemButton
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? 'initial' : 'center',
+                    px: 2.5,
+                    width: '100%',
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      ml: !open ? 1 : 'auto',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
+                </ListItemButton>
+              </Link>
+            </ListItem>
+          </Tooltip>
         ))}
         <Divider />
-        <div
-          style={{
-            padding: open ? '0px' : '10px',
-            paddingLeft: open ? '0px' : '50px',
-            marginTop: open ? '12px' : '0px',
-            display: 'flex',
-            justifyContent: open ? 'flex-start' : 'center',
-          }}
-        >
-          <ColorModeIconDropdown />
-          <Typography
-            variant='subtitle2'
-            sx={{ opacity: open ? 1 : 0, alignSelf: 'center', ml: 1 }}
-          >
-            Theme
-          </Typography>
-        </div>
       </List>
     </StyledDrawer>
   );

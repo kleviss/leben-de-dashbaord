@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
+
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import MuiToolbar from '@mui/material/Toolbar';
-import { tabsClasses } from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import SideMenuMobile from '../dashboard/components/SideMenuMobile';
-import MenuButton from '../dashboard/components/MenuButton';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import MenuButton from '../dashboard/components/MenuButton';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import MuiToolbar from '@mui/material/Toolbar';
+import SideMenuMobile from '../dashboard/components/SideMenuMobile';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { styled } from '@mui/material/styles';
+import { tabsClasses } from '@mui/material/Tabs';
+import { useLocation } from 'react-router-dom';
 
 const Toolbar = styled(MuiToolbar)({
   width: '100%',
@@ -30,6 +32,9 @@ const Toolbar = styled(MuiToolbar)({
 
 export default function AppNavbar() {
   const [open, setOpen] = React.useState(false);
+  const location = useLocation();
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const lastSegment = pathSegments[pathSegments.length - 1] || 'Dashboard';
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
@@ -39,13 +44,14 @@ export default function AppNavbar() {
     <AppBar
       position='fixed'
       sx={{
-        display: { xs: 'auto', md: 'none' },
+        // display: { xs: 'auto', md: 'none' },
         boxShadow: 0,
         bgcolor: 'background.paper',
         backgroundImage: 'none',
         borderBottom: '1px solid',
         borderColor: 'divider',
         top: 'var(--template-frame-height, 0px)',
+        pl: '50px !important',
       }}
     >
       <Toolbar variant='regular'>
@@ -59,9 +65,9 @@ export default function AppNavbar() {
           }}
         >
           <Stack direction='row' spacing={1} sx={{ justifyContent: 'center', mr: 'auto' }}>
-            <CustomIcon />
+            {/* <CustomIcon /> */}
             <Typography variant='h4' component='h1' sx={{ color: 'text.primary' }}>
-              Dashboard
+              {lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)}
             </Typography>
           </Stack>
           <ColorModeIconDropdown />

@@ -1,6 +1,9 @@
 import {
   Box,
   Button,
+  Chip,
+  Collapse,
+  InputLabel,
   Paper,
   Table,
   TableBody,
@@ -8,11 +11,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
+  Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
+import { CATEGORIES_API } from '../api/routes/index.js';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import ManageQuestionDialog from './ManageQuestionDialog';
 import { styled } from '@mui/material/styles';
 
@@ -24,11 +32,20 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 const QuestionsManagement = () => {
   const [questions, setQuestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasRequestFailed, setHasRequestFailed] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategoryFilters, setSelectedCategoryFilters] = useState([]);
+  const [selectedDifficultyFilters, setSelectedDifficultyFilters] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     fetchQuestions();
+    fetchCategories();
   }, []);
 
   const fetchQuestions = async () => {
@@ -38,6 +55,21 @@ const QuestionsManagement = () => {
       setQuestions(data);
     } catch (error) {
       console.error('Error fetching questions:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(CATEGORIES_API.GET_ALL);
+      const data = await response.json();
+      setCategories(data);
+      setIsLoading(false);
+      setHasRequestFailed(false);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setIsLoading(false);
+      setHasRequestFailed(true);
     }
   };
 
@@ -119,30 +151,116 @@ const QuestionsManagement = () => {
     }
   };
 
+  const [selectedFilters, setSelectedFilters] = useState([]);
+
+  const handleSearchChange = (event) => {
+    setSearchText(event.target.value);
+  };
+
+  const handleSort = () => {
+    setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+  };
+
+  const handleFilterChange = (type, filter) => {
+    const currentFilters =
+      type === 'category' ? selectedCategoryFilters : selectedDifficultyFilters;
+    const currentIndex = currentFilters.indexOf(filter);
+    const newFilters = [...currentFilters];
+
+    if (currentIndex === -1) {
+      newFilters.push(filter);
+    } else {
+      newFilters.splice(currentIndex, 1);
+    }
+
+    if (type === 'category') {
+      setSelectedCategoryFilters(newFilters);
+    } else {
+      setSelectedDifficultyFilters(newFilters);
+    }
+  };
+
+  const filteredQuestions = questions
+    .filter(
+      (question) =>
+        question.categoryId.toLowerCase().includes(searchText.toLowerCase()) &&
+        (selectedCategoryFilters.length === 0 ||
+          selectedCategoryFilters.includes(question.categoryId)) &&
+        (selectedDifficultyFilters.length === 0 ||
+          selectedDifficultyFilters.includes(question.difficulty))
+    )
+    .sort((a, b) => {
+      if (sortDirection === 'asc') {
+        return a.categoryId.localeCompare(b.categoryId);
+      } else {
+        return b.categoryId.localeCompare(a.categoryId);
+      }
+    });
+
   return (
-    <Box>
-      <Button variant='contained' onClick={() => setShowAddForm(!showAddForm)} sx={{ mb: 2 }}>
-        {'Add New Question'}
-      </Button>
-      {showAddForm && (
-        <ManageQuestionDialog
-          onSubmit={handleSubmit}
-          onClose={handleClose}
-          editingQuestion={editingQuestion}
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0, mt: 8 }}>
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-start' }}>
+          <Button variant='contained' onClick={() => setShowAddForm(!showAddForm)} sx={{ mb: 2 }}>
+            {'Add New Question'}{' '}
+          </Button>{' '}
+          <Button onClick={() => setShowFilters(!showFilters)}>
+            {showFilters ? <ExpandLess /> : <ExpandMore />} More Filters
+          </Button>
+        </Box>
+        <TextField
+          placeholder='Search by Category'
+          size='small'
+          variant='outlined'
+          value={searchText}
+          onChange={handleSearchChange}
+          sx={{ width: '300px' }}
         />
-      )}
+      </Box>
+      <Box sx={{ mb: 2 }}>
+        <Collapse in={showFilters}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+            <InputLabel>Filter by Difficulty:</InputLabel>
+            {['easy', 'medium', 'hard'].map((difficulty) => (
+              <Chip
+                key={difficulty}
+                label={difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                onClick={() => handleFilterChange('difficulty', difficulty)}
+                color={selectedDifficultyFilters.includes(difficulty) ? 'primary' : 'default'}
+                variant='outlined'
+              />
+            ))}
+            <InputLabel>Filter by Category:</InputLabel>
+            {categories.map((category) => (
+              <Chip
+                key={category.id}
+                label={category.name}
+                onClick={() => handleFilterChange('category', category.id)}
+                color={selectedCategoryFilters.includes(category.id) ? 'primary' : 'default'}
+                variant='outlined'
+              />
+            ))}
+          </Box>
+        </Collapse>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <StyledTableCell>Category</StyledTableCell>
+              <StyledTableCell
+                onClick={handleSort}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                Category {sortDirection === 'asc' ? <ExpandLess /> : <ExpandMore />}
+              </StyledTableCell>
               <StyledTableCell>Question</StyledTableCell>
               <StyledTableCell>Difficulty</StyledTableCell>
               <StyledTableCell>Actions</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {questions.map((question) => (
+            {filteredQuestions.map((question) => (
               <TableRow key={question._id}>
                 <TableCell>{question.categoryId}</TableCell>
                 <TableCell>{question.question}</TableCell>
@@ -171,7 +289,14 @@ const QuestionsManagement = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </Box>
+      {showAddForm && (
+        <ManageQuestionDialog
+          onSubmit={handleSubmit}
+          onClose={handleClose}
+          editingQuestion={editingQuestion}
+        />
+      )}
+    </>
   );
 };
 

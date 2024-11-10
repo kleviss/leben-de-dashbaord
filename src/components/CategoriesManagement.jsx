@@ -1,45 +1,43 @@
-import * as React from 'react';
-
 import {
   Box,
+  Button,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
   InputLabel,
-  Button as MuiButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import { Button } from 'primereact/button';
 import { CATEGORIES_API } from '../api/routes/index.js';
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import Grid from '@mui/material/Grid';
-import { InputText } from 'primereact/inputtext';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import UploadIcon from '@mui/icons-material/Upload';
-import { useState } from 'react';
-
-// const StyledTableCell = styled(TableCell)(({ theme }) => ({
-//   fontWeight: 'bold',
-//   // backgroundColor: theme.palette.primary.main,
-//   // color: theme.palette.common.white,
-// }));
 
 export default function CategoriesManagement() {
-  const [categories, setCategories] = React.useState([]);
-  const [open, setOpen] = React.useState(false);
-  const [editingCategory, setEditingCategory] = React.useState(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
-  const [categoryToDelete, setCategoryToDelete] = React.useState(null);
-  const [imageFile, setImageFile] = React.useState(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [hasRequestFailed, setHasRequestFailed] = React.useState(false);
-  // ai photo picker states
+  const [categories, setCategories] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasRequestFailed, setHasRequestFailed] = useState(false);
   const [aiPhotos, setAiPhotos] = useState([]);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [selectedAiPhoto, setSelectedAiPhoto] = useState(null);
@@ -47,8 +45,7 @@ export default function CategoriesManagement() {
   const [saveError, setSaveError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  React.useEffect(() => {
-    // fetchCategories();
+  useEffect(() => {
     setTimeout(() => {
       fetchCategories();
     }, 1000);
@@ -196,167 +193,145 @@ export default function CategoriesManagement() {
     setOpen(true);
   };
 
-  const imageBodyTemplate = (category) => {
-    return (
-      <Box
-        onMouseEnter={() => setHoveredCategory(category._id)}
-        onMouseLeave={() => setHoveredCategory(null)}
-        onClick={() => handleImageUpload(category)}
-        sx={{
-          position: 'relative',
-          width: '120px',
-          height: '67.5px',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          cursor: 'pointer',
-        }}
-      >
-        {category.imageUrl ? (
-          <img
-            src={category.imageUrl}
-            alt={category.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '10px',
-            }}
-          >
-            No Image
-          </Box>
-        )}
-        {hoveredCategory === category._id && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: 'white',
-            }}
-          >
-            <UploadIcon />
-          </Box>
-        )}
-      </Box>
-    );
+  const [searchText, setSearchText] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  const handleSearchChange = (event) => {
+    setSearchText(event.target.value);
   };
 
-  const actionsBodyTemplate = (category) => {
-    return (
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button
-          icon='pi pi-pencil'
-          outlined
-          className='mr-2'
-          onClick={() => handleOpen(category)}
-          severity='info'
-          label='Edit'
-          size='small'
-        />
-        <Button
-          icon='pi pi-trash'
-          outlined
-          severity='danger'
-          onClick={() => handleDeleteConfirmOpen(category)}
-          label='Delete'
-          size='small'
-        />
-      </Box>
-    );
+  const handleSort = () => {
+    setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
   };
 
-  const [globalFilterValue, setGlobalFilterValue] = React.useState('');
-  const [filteredCategories, setFilteredCategories] = React.useState([]);
-
-  const onGlobalFilterChange = (e) => {
-    const value = e.target.value;
-    setGlobalFilterValue(value);
-
-    if (value) {
-      const filtered = categories.filter((category) => {
-        return Object.keys(category).some((field) => {
-          return String(category[field]).toLowerCase().includes(value.toLowerCase());
-        });
-      });
-      setFilteredCategories(filtered);
-    } else {
-      setFilteredCategories([...categories]);
-    }
-  };
-
-  const renderHeader = () => {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mr: 14 }}>
-        <MuiButton variant='contained' onClick={() => handleOpen()} sx={{ mb: 2 }}>
-          Add New Category
-        </MuiButton>
-        <Box>
-          <span className='p-input-icon-left'>
-            <i className='pi pi-search' style={{ marginRight: '15px', marginLeft: '15px' }} />
-            <InputText
-              value={globalFilterValue}
-              onChange={onGlobalFilterChange}
-              placeholder='Keyword Search'
-              style={{ padding: '10px', paddingLeft: '40px' }}
-            />
-          </span>
-        </Box>
-      </Box>
-    );
-  };
-
-  const header = renderHeader();
+  const filteredCategories = categories
+    .filter((category) => category.name.toLowerCase().includes(searchText.toLowerCase()))
+    .sort((a, b) => {
+      if (sortDirection === 'asc') {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.name.localeCompare(a.name);
+      }
+    });
 
   return (
     <Box>
-      {isLoading && !hasRequestFailed && (
-        <Box
-          sx={{
-            display: 'flex',
-            height: '70vh',
-            justifyContent: 'center',
-            alignItems: 'center',
-            mt: 2,
-          }}
-        >
-          <CircularProgress color='primary' />
-        </Box>
-      )}
-
-      {!isLoading && hasRequestFailed && (
-        <Typography color='error'>Failed to fetch categories</Typography>
-      )}
-
-      {!isLoading && !hasRequestFailed && (
-        <DataTable
-          value={filteredCategories.length > 0 ? filteredCategories : categories}
-          header={header}
-          tableStyle={{ minWidth: '50rem' }}
-          globalFilterFields={['name', 'description']}
-        >
-          <Column header='Image' body={imageBodyTemplate}></Column>
-          <Column field='name' header='Name'></Column>
-          <Column field='description' header='Description'></Column>
-          <Column header='Actions' body={actionsBodyTemplate}></Column>
-        </DataTable>
-      )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button variant='contained' onClick={() => handleOpen()} sx={{ mb: 2 }}>
+          Add New Category
+        </Button>
+        <TextField
+          // label='Search Categories'
+          placeholder='Search Categories'
+          variant='outlined'
+          value={searchText}
+          onChange={handleSearchChange}
+          sx={{ width: '300px' }}
+          size='small'
+        />
+      </Box>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ borderBottom: '1px solid white' }}>
+              <TableCell onClick={handleSort} style={{ cursor: 'pointer', display: 'flex' }}>
+                Name {sortDirection === 'asc' ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </TableCell>
+              <TableCell sx={{ borderBottom: '1px solid white' }}>Description</TableCell>
+              <TableCell sx={{ borderBottom: '1px solid white' }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredCategories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell>
+                  <Box
+                    onMouseEnter={() => setHoveredCategory(category._id)}
+                    onMouseLeave={() => setHoveredCategory(null)}
+                    onClick={() => handleImageUpload(category)}
+                    sx={{
+                      position: 'relative',
+                      width: '120px',
+                      height: '67.5px',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {category.imageUrl ? (
+                      <img
+                        src={category.imageUrl}
+                        alt={category.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          backgroundColor: '#f0f0f0',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          fontSize: '10px',
+                        }}
+                      >
+                        No Image
+                      </Box>
+                    )}
+                    {hoveredCategory === category._id && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          color: 'white',
+                        }}
+                      >
+                        <UploadIcon />
+                      </Box>
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell>{category.name}</TableCell>
+                <TableCell>{category.description}</TableCell>
+                <TableCell sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<EditIcon />}
+                    onClick={() => handleOpen(category)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    color='error'
+                    startIcon={<DeleteIcon />}
+                    onClick={() => {
+                      setDeleteConfirmOpen(true);
+                      setCategoryToDelete(category);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
       <Dialog
         open={open}
         onClose={handleClose}
@@ -430,18 +405,18 @@ export default function CategoriesManagement() {
                 <Box
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'baseline', gap: 1 }}
                 >
-                  <MuiButton
+                  <Button
                     variant='contained'
                     component='span'
                     sx={{ mt: 1 }}
                     startIcon={<UploadIcon />}
                   >
                     Upload Image
-                  </MuiButton>
+                  </Button>
                   {imageFile && <Typography>Selected file: {imageFile.name}</Typography>}
                 </Box>
               </label>
-              <MuiButton
+              <Button
                 variant='contained'
                 component='span'
                 sx={{
@@ -456,7 +431,7 @@ export default function CategoriesManagement() {
                 onClick={handleAiClick}
               >
                 Use AI
-              </MuiButton>
+              </Button>
             </Box>{' '}
             {isLoadingPhotos && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -514,12 +489,12 @@ export default function CategoriesManagement() {
             </Box>
           )}
           <DialogActions>
-            <MuiButton onClick={handleClose} disabled={isSaving}>
+            <Button onClick={handleClose} disabled={isSaving}>
               Cancel
-            </MuiButton>
-            <MuiButton type='submit' disabled={isSaving}>
+            </Button>
+            <Button type='submit' disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save'}
-            </MuiButton>
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
@@ -533,14 +508,17 @@ export default function CategoriesManagement() {
         <DialogContent>
           <DialogContentText id='alert-dialog-description'>
             Are you sure you want to delete the category <strong>{categoryToDelete?.name}</strong>?
-            This action cannot be undone.
+          </DialogContentText>
+          {/*  This action cannot be undone. */}
+          <DialogContentText sx={{ mt: 2, fontWeight: 'bold', fontSize: '14px' }} color='error'>
+            This action cannot be undone!
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <MuiButton onClick={handleDeleteConfirmClose}>Cancel</MuiButton>
-          <MuiButton onClick={handleDelete} color='error' autoFocus>
+          <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
+          <Button onClick={handleDelete} color='error' autoFocus>
             Delete
-          </MuiButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

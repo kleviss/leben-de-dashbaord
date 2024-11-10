@@ -49,8 +49,6 @@ const ManageQuestionDialog = ({ onSubmit, onClose, editingQuestion = null }) => 
     }
   }, [editingQuestion]);
 
-  console.log('editingQuestion', editingQuestion);
-
   const handleImageUpload = (index, file) => {
     const newImages = [...formData.images];
     newImages[index] = file;
@@ -95,7 +93,9 @@ const ManageQuestionDialog = ({ onSubmit, onClose, editingQuestion = null }) => 
 
   return (
     <Dialog open={true} onClose={onClose} maxWidth='sm' fullWidth>
-      <DialogTitle sx={{ mb: -2 }}>Add New Question</DialogTitle>
+      <DialogTitle sx={{ mb: -2 }}>
+        {editingQuestion ? 'Edit Question' : 'Add New Question'}
+      </DialogTitle>
 
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -123,7 +123,10 @@ const ManageQuestionDialog = ({ onSubmit, onClose, editingQuestion = null }) => 
               >
                 {categories.map((category) => {
                   return (
-                    <MenuItem key={category._id} value={category._id}>
+                    <MenuItem
+                      key={category._id}
+                      value={category._id === 'gesamtfragenkatalog' ? 'allgemein' : category._id}
+                    >
                       {category.name}
                     </MenuItem>
                   );
@@ -173,7 +176,7 @@ const ManageQuestionDialog = ({ onSubmit, onClose, editingQuestion = null }) => 
                 }}
               />
             }
-            label='Has question images?'
+            label='Does the question have images?'
             sx={{ mt: 0 }}
             labelPlacement='end'
           />
